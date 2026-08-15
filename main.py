@@ -2,6 +2,7 @@
 
 from database.connexion import connexion_bd
 from menu.auth import demander_authentification
+from menu.interface import afficher_menu
 
 
 def main():
@@ -12,7 +13,7 @@ def main():
             return 1
 
         print("Authentification réussie.")
-        print("Les menus par rôle arrivent dans la prochaine étape.")
+        afficher_menu(utilisateur)
         return 0
     except Exception as erreur:
         print(f"Une erreur est survenue : {erreur}")

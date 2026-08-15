@@ -31,5 +31,5 @@ class ConfigurationBD:
             port=int(os.getenv("DB_PORT", "3306")),
             nom_base=os.environ["DB_NAME"],
             utilisateur=os.environ["DB_USER"],
-            mot_de_passe=os.getenv("DB_PASSEWORD",""),
+            mot_de_passe=os.getenv("DB_PASSWORD", ""),
         )
