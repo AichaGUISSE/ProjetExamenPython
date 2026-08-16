@@ -49,3 +49,34 @@ def demander_email(prompt):
         if valeur.count("@") == 1 and "." in domaine and len(domaine) > 2:
             return valeur
         print("Adresse email invalide (format attendu : nom@domaine.ext).\n")
+
+
+def afficher_titre(titre):
+    largeur = len(titre) + 4
+    print("\n" + "═" * largeur)
+    print(f"  {titre}")
+    print("═" * largeur)
+
+
+def afficher_tableau(entetes, lignes):
+    """Affiche une liste de lignes sous forme de tableau ASCII aligné."""
+    toutes_les_lignes = [entetes] + [[str(valeur) for valeur in ligne] for ligne in lignes]
+    nb_colonnes = len(entetes)
+    largeurs = [
+        max(len(ligne[colonne]) for ligne in toutes_les_lignes)
+        for colonne in range(nb_colonnes)
+    ]
+
+    def separateur(gauche, milieu, droite):
+        return gauche + milieu.join("─" * (largeur + 2) for largeur in largeurs) + droite
+
+    def ligne_formatee(valeurs):
+        cellules = [f" {str(valeur):<{largeur}} " for valeur, largeur in zip(valeurs, largeurs)]
+        return "│" + "│".join(cellules) + "│"
+
+    print(separateur("┌", "┬", "┐"))
+    print(ligne_formatee(entetes))
+    print(separateur("├", "┼", "┤"))
+    for ligne in lignes:
+        print(ligne_formatee(ligne))
+    print(separateur("└", "┴", "┘"))

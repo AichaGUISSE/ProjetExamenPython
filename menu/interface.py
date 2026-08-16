@@ -1,16 +1,21 @@
 """Menus affichés selon le rôle de l'utilisateur connecté."""
 
 from mysql.connector.errors import IntegrityError
+from dao.rapport_dao import RapportDAO
 
 from dao.incident_dao import IncidentDAO
 from dao.intervention_dao import InterventionDAO
 from dao.utilisateur_dao import UtilisateurDAO
 from menu.utils import (
+    afficher_tableau,
+    afficher_titre,
     demander_choix_parmi,
     demander_email,
     demander_entier,
     demander_non_vide,
 )
+
+rapport_dao = RapportDAO()
 
 incident_dao = IncidentDAO()
 intervention_dao = InterventionDAO()
@@ -191,6 +196,55 @@ def menu_technicien(utilisateur):
         else:
             print("Choix invalide.")
 
+def afficher_statistiques():
+    afficher_titre("STATISTIQUES ET RAPPORTS")
+
+    print("Incidents par statut")
+    lignes = rapport_dao.compter_incidents_par_statut()
+    afficher_tableau(["Statut", "Total"], lignes)
+
+    print("\nIncidents par priorité")
+    lignes = rapport_dao.compter_incidents_par_priorite()
+    afficher_tableau(["Priorité", "Total"], lignes)
+
+    moyenne = rapport_dao.temps_moyen_resolution_heures()
+    print("\nTemps moyen de résolution")
+    if moyenne is None:
+        print("Pas encore assez de données (aucun incident résolu avec intervention).")
+    else:
+        print(f"{moyenne:.1f} heure(s) en moyenne, du signalement à la dernière intervention.")
+
+    print("\nTop 3 des techniciens les plus actifs")
+    top = rapport_dao.top_techniciens(3)
+    if not top:
+        print("Aucune intervention enregistrée pour l'instant.")
+    else:
+        lignes = [(f"{t['prenom']} {t['nom']}", t["total_interventions"]) for t in top]
+        afficher_tableau(["Technicien", "Interventions"], lignes)
+
+    print("\nDétail par technicien")
+    details = rapport_dao.stats_par_technicien()
+    if not details:
+        print("Aucune donnée disponible.")
+    else:
+        lignes = [
+            (
+                f"{d['prenom']} {d['nom']}",
+                d["nb_incidents_traites"],
+                f"{d['duree_moyenne_minutes']:.0f} min",
+            )
+            for d in details
+        ]
+        afficher_tableau(["Technicien", "Incidents traités", "Durée moyenne"], lignes)
+
+    total, dans_48h, pourcentage = rapport_dao.taux_resolution_48h()
+    print("\nTaux de résolution dans les 48h")
+    if total == 0:
+        print("Pas encore d'incident résolu pour calculer ce taux.")
+    else:
+        print(f"{dans_48h}/{total} incidents résolus en moins de 48h ({pourcentage:.1f}%).")
+    print()
+
 
 def menu_admin(utilisateur):
     while True:
@@ -200,7 +254,7 @@ def menu_admin(utilisateur):
         print("3. Créer un utilisateur")
         print("4. Modifier un utilisateur")
         print("5. Supprimer un utilisateur")
-        print("6. Rechercher un utilisateur")
+        print("7. Statistiques et rapports")
         print("0. Se déconnecter")
         choix = input("Choix : ").strip()
 
@@ -333,6 +387,8 @@ def menu_admin(utilisateur):
             for u in resultats:
                 print(f"#{u['id']} {u['login']} - {u['nom']} {u['prenom']} ({u['role']})")
 
+        elif choix == "7":
+            afficher_statistiques()
         elif choix == "0":
             return
         else:
