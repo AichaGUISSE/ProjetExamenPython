@@ -5,16 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="004e5727-44cf-4649-a3ac-2b02129e7622" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/dao/incident_dao.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/dao/intervention_dao.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/menu/interface.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/incident.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/intervention.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/menu/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/create_tables.py" beforeDir="false" afterPath="$PROJECT_DIR$/create_tables.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dao/utilisateur_dao.py" beforeDir="false" afterPath="$PROJECT_DIR$/dao/utilisateur_dao.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/menu/auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/menu/auth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/menu/interface.py" beforeDir="false" afterPath="$PROJECT_DIR$/menu/interface.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,6 +43,11 @@
     "git-widget-placeholder": "main"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\hp\PycharmProjects\PythonProject\menu" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>

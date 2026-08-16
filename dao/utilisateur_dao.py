@@ -91,3 +91,13 @@ class UtilisateurDAO(BaseDAO):
         with connexion_bd.lecture() as curseur:
             curseur.execute(requete, (motif, motif, motif))
             return curseur.fetchall()
+
+    def supprimer_si_possible(self, utilisateur_id):
+        if self.get_by_id(utilisateur_id) is None:
+            return False, "Aucun utilisateur trouvé avec cet ID."
+
+        if self.a_des_incidents_ou_interventions(utilisateur_id):
+            return False, "Suppression impossible : cet utilisateur a des incidents ou interventions associés."
+
+        self.delete_by_id(utilisateur_id)
+        return True, "Utilisateur supprimé."

@@ -1,20 +1,28 @@
 """Point de départ de l'application."""
 
 from database.connexion import connexion_bd
-from menu.auth import demander_authentification
+from menu.auth import QUITTER, demander_authentification
 from menu.interface import afficher_menu
 
 
 def main():
     try:
-        utilisateur = demander_authentification()
+        while True:
+            resultat = demander_authentification()
 
-        if utilisateur is None:
-            return 1
+            if resultat == QUITTER:
+                print("À bientôt.")
+                return 0
 
-        print("Authentification réussie.")
-        afficher_menu(utilisateur)
-        return 0
+            if resultat is None:
+                reponse = input("Réessayer une connexion ? (o/n) : ").strip().lower()
+                if reponse != "o":
+                    return 1
+                continue
+
+            afficher_menu(resultat)
+            print("\nDéconnexion. Retour à l'écran de connexion.\n")
+
     except Exception as erreur:
         print(f"Une erreur est survenue : {erreur}")
         return 1
