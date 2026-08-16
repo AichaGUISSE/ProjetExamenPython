@@ -101,3 +101,14 @@ class UtilisateurDAO(BaseDAO):
 
         self.delete_by_id(utilisateur_id)
         return True, "Utilisateur supprimé."
+
+    def lister_services(self):
+        requete = """
+            SELECT DISTINCT service
+            FROM utilisateur
+            WHERE service IS NOT NULL AND service <> ''
+            ORDER BY service
+        """
+        with connexion_bd.lecture() as curseur:
+            curseur.execute(requete)
+            return [ligne["service"] for ligne in curseur.fetchall()]

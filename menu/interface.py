@@ -37,6 +37,47 @@ STATUTS_FILTRABLES = [
 ]
 
 
+def demander_service():
+    services_existants = utilisateur_dao.lister_services()
+
+    if not services_existants:
+        return demander_non_vide("Aucun service existant. Nom du nouveau service : ")
+
+    options = [(service, service) for service in services_existants]
+    options.append(("__NOUVEAU__", "+ Ajouter un nouveau service"))
+
+    choix = demander_choix_parmi("Service :", options)
+
+    if choix == "__NOUVEAU__":
+        return demander_non_vide("Nom du nouveau service : ")
+
+    return choix
+
+
+def selectionner_incident(incidents, message_si_vide):
+    """Affiche une liste d'incidents et demande de choisir un ID parmi eux.
+
+    Renvoie None si la liste est vide (rien à choisir) ou si l'ID saisi
+    n'est pas dans la liste affichée.
+    """
+    if not incidents:
+        print(message_si_vide)
+        return None
+
+    print()
+    ids_affiches = set()
+    for incident in incidents:
+        print(f"#{incident['id']} [{incident['statut']}] {incident['titre']}")
+        ids_affiches.add(incident["id"])
+
+    incident_id = demander_entier("ID de l'incident à choisir : ")
+
+    if incident_id not in ids_affiches:
+        print("Cet ID ne fait pas partie de la liste affichée ci-dessus.")
+        return None
+
+    return incident_id
+
 def menu_utilisateur(utilisateur):
     while True:
         print("\n--- MENU UTILISATEUR ---")
@@ -90,44 +131,58 @@ def menu_technicien(utilisateur):
         choix = input("Choix : ").strip()
 
         if choix == "1":
-            resultats = incident_dao.lister_ouverts_ou_en_cours()
+            resultats = incident_dao.lister_par_statuts(["OUVERT", "EN_COURS"])
             if not resultats:
                 print("Aucun incident ouvert ou en cours.")
             for incident in resultats:
                 print(f"#{incident['id']} [{incident['statut']}] {incident['titre']}")
 
         elif choix == "2":
-            incident_id = demander_entier("ID de l'incident : ")
+            incidents = incident_dao.lister_par_statuts(["OUVERT"])
+            incident_id = selectionner_incident(incidents, "Aucun incident OUVERT à prendre en charge.")
+            if incident_id is None:
+                continue
+
             ok, message = incident_dao.changer_statut(incident_id, "EN_COURS")
             print(message)
 
         elif choix == "3":
-            incident_id = demander_entier("ID de l'incident : ")
-            incident = incident_dao.get_by_id(incident_id)
-
-            if incident is None:
-                print("Incident introuvable.")
+            incidents = incident_dao.lister_par_statuts(["OUVERT", "EN_COURS"])
+            incident_id = selectionner_incident(incidents, "Aucun incident disponible pour une intervention.")
+            if incident_id is None:
                 continue
-            if incident["statut"] not in ("OUVERT", "EN_COURS"):
-                print("Intervention impossible : l'incident n'est ni OUVERT ni EN_COURS.")
+
+            # Deuxième vérification : l'affichage seul ne suffit pas, on
+            # revérifie le statut réel juste avant d'écrire en base.
+            incident = incident_dao.get_by_id(incident_id)
+            if incident is None or incident["statut"] not in ("OUVERT", "EN_COURS"):
+                print("Cet incident n'est plus disponible pour une intervention.")
                 continue
 
             commentaire = demander_non_vide("Commentaire : ")
             duree = demander_entier("Durée (minutes) : ")
 
             try:
-                intervention_dao.ajouter(commentaire, duree, incident_id, utilisateur.id)
-                print("Intervention ajoutée.")
+                intervention_id = intervention_dao.ajouter(commentaire, duree, incident_id, utilisateur.id)
+                print(f"Intervention n°{intervention_id} ajoutée.")
             except Exception as erreur:
                 print(f"Impossible d'ajouter l'intervention : {erreur}")
 
         elif choix == "4":
-            incident_id = demander_entier("ID de l'incident : ")
+            incidents = incident_dao.lister_par_statuts(["EN_COURS"])
+            incident_id = selectionner_incident(incidents, "Aucun incident EN_COURS à résoudre.")
+            if incident_id is None:
+                continue
+
             ok, message = incident_dao.changer_statut(incident_id, "RESOLU")
             print(message)
 
         elif choix == "5":
-            incident_id = demander_entier("ID de l'incident : ")
+            incidents = incident_dao.lister_par_statuts(["RESOLU"])
+            incident_id = selectionner_incident(incidents, "Aucun incident RESOLU à fermer.")
+            if incident_id is None:
+                continue
+
             ok, message = incident_dao.changer_statut(incident_id, "FERME")
             print(message)
 
@@ -163,7 +218,7 @@ def menu_admin(utilisateur):
             prenom = demander_non_vide("Prénom : ")
             email = demander_email("Email : ")
             role = demander_choix_parmi("Rôle :", ROLES)
-            service = demander_non_vide("Service : ")
+            service = demander_service()
 
             try:
                 nouvel_id = utilisateur_dao.creer(login, password, nom, prenom, email, role, service)
@@ -173,26 +228,97 @@ def menu_admin(utilisateur):
             except Exception as erreur:
                 print(f"Erreur lors de la création : {erreur}")
 
+
         elif choix == "4":
+
             utilisateur_id = demander_entier("ID à modifier : ")
 
-            if utilisateur_dao.get_by_id(utilisateur_id) is None:
+            utilisateur_existant = utilisateur_dao.get_by_id(utilisateur_id)
+
+            if utilisateur_existant is None:
                 print("Aucun utilisateur trouvé avec cet ID.")
+
                 continue
 
-            nom = demander_non_vide("Nouveau nom : ")
-            prenom = demander_non_vide("Nouveau prénom : ")
-            email = demander_email("Nouvel email : ")
-            role = demander_choix_parmi("Nouveau rôle :", ROLES)
-            service = demander_non_vide("Nouveau service : ")
+            nom = utilisateur_existant["nom"]
 
-            try:
-                utilisateur_dao.modifier(utilisateur_id, nom, prenom, email, role, service)
-                print("Utilisateur modifié.")
-            except IntegrityError:
-                print("Impossible de modifier : cet email est déjà utilisé par un autre compte.")
-            except Exception as erreur:
-                print(f"Erreur lors de la modification : {erreur}")
+            prenom = utilisateur_existant["prenom"]
+
+            email = utilisateur_existant["email"]
+
+            role = utilisateur_existant["role"]
+
+            service = utilisateur_existant["service"]
+
+            print(f"\nUtilisateur #{utilisateur_id} : {prenom} {nom} ({role}) — {email} — {service}")
+
+            while True:
+
+                print("\nQuel champ modifier ?")
+
+                print("1. Nom")
+
+                print("2. Prénom")
+
+                print("3. Email")
+
+                print("4. Rôle")
+
+                print("5. Service")
+
+                print("6. Valider les modifications")
+
+                print("0. Annuler")
+
+                sous_choix = input("Choix : ").strip()
+
+                if sous_choix == "1":
+
+                    nom = demander_non_vide("Nouveau nom : ")
+
+                elif sous_choix == "2":
+
+                    prenom = demander_non_vide("Nouveau prénom : ")
+
+                elif sous_choix == "3":
+
+                    email = demander_email("Nouvel email : ")
+
+                elif sous_choix == "4":
+
+                    role = demander_choix_parmi("Nouveau rôle :", ROLES)
+
+                elif sous_choix == "5":
+
+                    service = demander_service()
+
+                elif sous_choix == "6":
+
+                    try:
+
+                        utilisateur_dao.modifier(utilisateur_id, nom, prenom, email, role, service)
+
+                        print("Utilisateur modifié.")
+
+                    except IntegrityError:
+
+                        print("Impossible de modifier : cet email est déjà utilisé par un autre compte.")
+
+                    except Exception as erreur:
+
+                        print(f"Erreur lors de la modification : {erreur}")
+
+                    break
+
+                elif sous_choix == "0":
+
+                    print("Modification annulée.")
+
+                    break
+
+                else:
+
+                    print("Choix invalide.")
 
         elif choix == "5":
             utilisateur_id = demander_entier("ID à supprimer : ")

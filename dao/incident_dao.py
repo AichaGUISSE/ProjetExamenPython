@@ -66,3 +66,10 @@ class IncidentDAO(BaseDAO):
             curseur.execute(requete, (nouveau_statut, incident_id))
 
         return True, f"Statut passé à {nouveau_statut}."
+
+    def lister_par_statuts(self, statuts):
+        placeholders = ", ".join(["%s"] * len(statuts))
+        requete = f"SELECT * FROM incident WHERE statut IN ({placeholders})"
+        with connexion_bd.lecture() as curseur:
+            curseur.execute(requete, tuple(statuts))
+            return curseur.fetchall()
